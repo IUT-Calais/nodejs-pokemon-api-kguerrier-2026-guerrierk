@@ -6,6 +6,7 @@ import {
   updatePokemonCard,
   deletePokemonCard,
 } from './pokemonCard.controller';
+import { verifyJWT } from '../common/jwt.middleware';
 
 export const pokemonCardRouter = Router();
 
@@ -17,11 +18,11 @@ pokemonCardRouter.get('/:pokemonCardId', getPokemonCardById);
 
 // - `POST:/pokemon-cards` : permet d'enregistrer le pokémon dont les propriétés sont passées dans le body de la requête
 
-pokemonCardRouter.post('/', createPokemonCard);
+pokemonCardRouter.post('/', verifyJWT, createPokemonCard);
 
 // - `PATCH:/pokemon-cards/:pokemonCardId` : permet de modifier le pokémon donc le `pokemonCardId` est passé en paramètre et les propriétés passées dans le body.
-pokemonCardRouter.patch('/:pokemonCardId', updatePokemonCard);
+pokemonCardRouter.patch('/:pokemonCardId', verifyJWT, updatePokemonCard);
 
 
 // - `DELETE:/pokemon-cards/:pokemonCardId:` : permet de supprimer le pokémon renseigné avec son `pokemonCardId`.
-pokemonCardRouter.delete('/:pokemonCardId', deletePokemonCard);
+pokemonCardRouter.delete('/:pokemonCardId', verifyJWT, deletePokemonCard);
