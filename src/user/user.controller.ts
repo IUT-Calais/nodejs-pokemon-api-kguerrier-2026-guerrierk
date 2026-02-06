@@ -6,10 +6,16 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken';
 
 export const getUsers = async (req: Request, res: Response) => {
-    // res.status(200).send(req.query);
-    // const users = await prisma.user.findMany();
-    res.status(200).send('Liste des utilisateurs');
-    // res.status(200).send(users);
+    // res.status(200).send('Liste des utilisateurs');
+    try {
+        const userId = req.params.userId;
+        const user = await prisma.user.findUnique({
+            where: {id: parseInt(userId)},
+        });
+        res.status(200).send(user);
+    } catch (error) {
+        res.status(500).json({error: 'Failed to fetch users'});
+    }
 }
 
 export const getUserById = async (req: Request, res: Response) => {
@@ -76,6 +82,18 @@ export const login = async (req: Request, res: Response) => {
 export const postUser = async (req: Request, res: Response) => {
     const { email, name, password } = req.body;
     try {
+        if (email == "" || name == "" || password == "") {
+            res.status(400).json({error: 'Incorrect Data User'});
+            return;
+        }
+        const userCheck = await prisma.user.findUnique({
+            where: {email},
+        });
+
+        if (userCheck) {
+            res.status(400).json({error: 'Incorrect Data User'});
+            return;
+        }
         const user = await prisma.user.create({
             data: {
                 email: email,
