@@ -97,6 +97,29 @@ describe('PokemonCard API', () => {
       const newPokemonCard = {
         name: 'Bulbasaur',
         pokedexId: 1,
+        typeName: 'Neunoeil',
+        imageUrl: 'bulbasaur.png',
+        lifePoints: 45,
+        attackId: 1,
+        weight: 85,
+        size: 6,
+        weaknessId: 2,
+      };
+
+      prismaMock.type.findUnique.mockResolvedValue(null);
+
+      const response = await request(app)
+        .post('/pokemon-cards')
+        .set('Authorization', 'Bearer mockedToken')
+        .send(newPokemonCard);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: `Type not found with name Neunoeil` });
+    });
+    it('should create a new PokemonCard', async () => {
+      const newPokemonCard = {
+        name: 'Bulbasaur',
+        pokedexId: 1,
         typeName: 'Grass',
         imageUrl: 'bulbasaur.png',
         lifePoints: 45,
@@ -107,7 +130,7 @@ describe('PokemonCard API', () => {
       };
       const foundType = { id: 3, name: 'Grass' };
       const createdPokemonCard = { id: 1, typeId: 3, ...newPokemonCard };
-      
+
       prismaMock.type.findUnique.mockResolvedValue(foundType);
       prismaMock.pokemonCard.create.mockResolvedValue(createdPokemonCard);
 
@@ -118,6 +141,23 @@ describe('PokemonCard API', () => {
 
       expect(response.status).toBe(201);
       expect(response.body).toEqual(createdPokemonCard);
+    });
+
+    it('should return 500 if creation fails', async () => {
+      prismaMock.pokemonCard.create.mockRejectedValue(
+        new Error('Database error')
+      );
+      const foundType = { id: 3, name: 'Grass' };
+      prismaMock.type.findUnique.mockResolvedValue(foundType);
+      const response = await request(app)
+        .post('/pokemon-cards')
+        .set('Authorization', 'Bearer mockedToken')
+        .send({ name: 'Bulbasaur' });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: 'Failed to create the PokemonCard',
+      });
     });
   });
 
