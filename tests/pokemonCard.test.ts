@@ -246,9 +246,41 @@ describe('PokemonCard API', () => {
     });
   });
 
-  // describe('DELETE /pokemon-cards/:pokemonCardId', () => {
-  //   it('should delete a PokemonCard', async () => {
-  //     expect(response.status).toBe(204);
-  //   });
-  // });
+  describe('DELETE /pokemon-cards/:pokemonCardId', () => {
+    it('should delete a PokemonCard', async () => {
+      
+      prismaMock.pokemonCard.delete.mockResolvedValue({
+        id: 1,
+        name: 'Pikachu',
+        pokedexId: 25,
+        typeId: 1,
+        imageUrl: 'pikachu.png',
+        lifePoints: 60,
+        weight: 85,
+        size: 6,
+        weaknessId: 2,
+      });
+
+      const response = await request(app)
+        .delete('/pokemon-cards/1')
+        .set('Authorization', 'Bearer mockedToken');
+
+      expect(response.status).toBe(204);
+    });
+
+    it('should return 500 if deletion fails', async () => {
+      prismaMock.pokemonCard.delete.mockRejectedValue(
+        new Error('Database error')
+      );
+
+      const response = await request(app)
+        .delete('/pokemon-cards/1')
+        .set('Authorization', 'Bearer mockedToken');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: 'Failed to delete the PokemonCard',
+      });
+    });
+  });
 });
