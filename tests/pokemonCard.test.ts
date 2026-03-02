@@ -93,7 +93,7 @@ describe('PokemonCard API', () => {
   });
 
   describe('POST /pokemon-cards', () => {
-    it('should create a new PokemonCard', async () => {
+    it('should return 404 if type not found', async () => {
       const newPokemonCard = {
         name: 'Bulbasaur',
         pokedexId: 1,
@@ -161,14 +161,90 @@ describe('PokemonCard API', () => {
     });
   });
 
-  // describe('PATCH /pokemon-cards/:pokemonCardId', () => {
-  //   it('should update an existing PokemonCard', async () => {
-  //     const updatedPokemonCard = {};
+  describe('PATCH /pokemon-cards/:pokemonCardId', () => {
+    it('should update an existing PokemonCard', async () => {
+      const updatedData = { name: 'Raichu', lifePoints: 80 };
+      const updatedPokemonCard = {
+        id: 1,
+        ...updatedData,
+        pokedexId: 25,
+        typeId: 3,
+        typeName: 'Grass',
+        imageUrl: 'raichu.png',
+        attackId: 1,
+        weight: 85,
+        size: 6,
+        weaknessId: 2,
+      };
+      const foundType = { id: 3, name: 'Grass' };
+      prismaMock.type.findUnique.mockResolvedValue(foundType);
+      prismaMock.pokemonCard.findUnique.mockResolvedValue(updatedPokemonCard);
+      prismaMock.pokemonCard.update.mockResolvedValue(updatedPokemonCard);
+      const response = await request(app)
+        .patch('/pokemon-cards/1')
+        .set('Authorization', 'Bearer mockedToken')
+        .send(updatedData);
 
-  //     expect(response.status).toBe(200);
-  //     expect(response.body).toEqual(updatedPokemonCard);
-  //   });
-  // });
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(updatedPokemonCard);
+    });
+    
+    it('should return 404 if Type is not found', async () => {
+      const updatedData = { name: 'Raichu', lifePoints: 80 };
+      const updatedPokemonCard = {
+        id: 1,
+        ...updatedData,
+        pokedexId: 25,
+        typeId: 3,
+        typeName: 'Grass',
+        imageUrl: 'raichu.png',
+        attackId: 1,
+        weight: 85,
+        size: 6,
+        weaknessId: 2,
+      };
+      prismaMock.type.findUnique.mockResolvedValue(null);
+      prismaMock.pokemonCard.findUnique.mockResolvedValue(updatedPokemonCard);
+
+      const response = await request(app)
+        .patch('/pokemon-cards/999')
+        .set('Authorization', 'Bearer mockedToken')
+        .send({ typeName: 'Neunoeil' });
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: `Type not found with name Neunoeil` });
+    });
+
+    it('should return 404 if PokemonCard is not found', async () => {
+      prismaMock.pokemonCard.findUnique.mockResolvedValue(null);
+
+      const response = await request(app)
+        .patch('/pokemon-cards/999')
+        .set('Authorization', 'Bearer mockedToken')
+        .send({ name: 'Raichu' });
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: 'PokemonCard not found' });
+    });
+
+    it('should return 500 if update fails', async () => {
+      prismaMock.pokemonCard.findUnique.mockRejectedValue(
+        new Error('Database error')
+      );
+      const foundType = { id: 3, name: 'Grass' };
+      prismaMock.type.findUnique.mockResolvedValue(foundType);
+
+      const response = await request(app)
+        .patch('/pokemon-cards/1')
+        .set('Authorization', 'Bearer mockedToken')
+        .send({ name: 'Raichu' });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toEqual({
+        error: 'Failed to update the PokemonCard',
+      });
+    });
+  });
 
   // describe('DELETE /pokemon-cards/:pokemonCardId', () => {
   //   it('should delete a PokemonCard', async () => {
